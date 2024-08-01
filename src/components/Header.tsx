@@ -15,9 +15,9 @@ const Header: React.FC<HeaderProps> = ({ username }) => {
       <nav>
         <ul>
           <li><Link to="/">Home</Link></li>
-          <li><Link to="/influencers">Influencers</Link></li>
+          {/* <li><Link to="/influencers">Influencers</Link></li>
           <li><Link to="/analytics">Analytics</Link></li>
-          <li><Link to="/settings">Settings</Link></li>
+          <li><Link to="/settings">Settings</Link></li> */}
         </ul>
       </nav>
       <div className="user-menu">
