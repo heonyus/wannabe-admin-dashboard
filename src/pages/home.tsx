@@ -2,23 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { TextField, List, ListItem, ListItemText } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { supabase } from '../config/supabase';
-import Login from '../components/Login';
-import SignUp from '../components/SignUp';
 
 interface Influencer {
   id: string;
   instagram_id: string;
 }
 
-interface HomeProps {
-  onLogin: (username: string) => void;
-}
 
-const Home: React.FC<HomeProps> = ({ onLogin }) => {
+const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    fetchInfluencers();
+  }, [searchTerm]);
 
   const fetchInfluencers = async () => {
     let query = supabase
@@ -29,8 +26,9 @@ const Home: React.FC<HomeProps> = ({ onLogin }) => {
     if (searchTerm) {
       query = query.ilike('instagram_id', `%${searchTerm}%`);
     } else {
+      // 검색어가 없을 경우 빈 배열로 설정
       setInfluencers([]);
-      return;
+      return; // 더 이상 진행하지 않음
     }
 
     const { data, error } = await query;
@@ -42,30 +40,8 @@ const Home: React.FC<HomeProps> = ({ onLogin }) => {
     }
   };
 
-  useEffect(() => {
-    fetchInfluencers();
-  }, [searchTerm]);
-
-  const handleLogin = (loggedInUsername: string) => {
-    setUsername(loggedInUsername);
-    onLogin(loggedInUsername);
-  };
-
-  const handleSignUp = () => {
-    setIsSignUp(false);
-  };
-
-  if (!username) {
-    return isSignUp ? (
-      <SignUp onSignUp={handleSignUp} />
-    ) : (
-      <Login onLogin={handleLogin} onSwitchToSignUp={() => setIsSignUp(true)} />
-    );
-  }
-
   return (
     <div>
-      <h2>{username}님, 환영합니다!</h2>
       <TextField
         fullWidth
         label="인플루언서 검색"

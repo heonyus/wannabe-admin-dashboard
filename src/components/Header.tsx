@@ -21,11 +21,7 @@ const Header: React.FC<HeaderProps> = ({ username }) => {
         </ul>
       </nav>
       <div className="user-menu">
-        {username ? (
-          <span>{username}</span>
-        ) : (
-          <span>로그인이 필요합니다</span>
-        )}
+        {username ? <span>{username}</span> : <span> </span>}
       </div>
     </header>
   );

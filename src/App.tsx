@@ -7,7 +7,7 @@ import InfluencerPage from './pages/InfluencerPage';
 import './styles/globals.css';
 
 const App: React.FC = () => {
-  const [username, setUsername] = useState<string | null>(null);
+  const [username] = useState<string | null>(null);
 
   return (
     <Router>
@@ -15,7 +15,7 @@ const App: React.FC = () => {
         <Header username={username} />
         <main>
           <Routes>
-            <Route path="/" element={<Home onLogin={setUsername} />} />
+            <Route path="/" element={<Home />} />
             <Route path="/influencer/:id" element={<InfluencerPage />} />
           </Routes>
         </main>

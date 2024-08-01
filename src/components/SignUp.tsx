@@ -11,31 +11,58 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const MAX_SIGNUP_ATTEMPTS = 3;
+  const SIGNUP_COOLDOWN = 60 * 60 * 1000; // 1시간
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setError(null);
+
+    const lastAttempt = localStorage.getItem('lastSignupAttempt');
+    const attemptCount = parseInt(localStorage.getItem('signupAttemptCount') || '0');
+
+    if (lastAttempt && Date.now() - parseInt(lastAttempt) < SIGNUP_COOLDOWN) {
+      setError('너무 많은 회원가입 시도가 있었습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    if (attemptCount >= MAX_SIGNUP_ATTEMPTS) {
+      setError('너무 많은 회원가입 시도가 있었습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { username }
+          data: { username },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
       if (error) throw error;
 
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({ id: data.user.id, username, email });
-
-        if (profileError) throw profileError;
-
         onSignUp();
       }
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('rate limit')) {
+          setError('너무 많은 회원가입 시도가 있었습니다. 잠시 후 다시 시도해주세요.');
+        } else {
+          setError('회원가입 중 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+        }
+      }
+      console.error('회원가입 오류:', error);
+    } finally {
+      setIsSubmitting(false);
+      localStorage.setItem('lastSignupAttempt', Date.now().toString());
+      localStorage.setItem('signupAttemptCount', (attemptCount + 1).toString());
     }
   };
 
@@ -82,8 +109,9 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
         fullWidth
         variant="contained"
         sx={{ mt: 3, mb: 2 }}
+        disabled={isSubmitting}
       >
-        회원가입
+        {isSubmitting ? '처리 중...' : '회원가입'}
       </Button>
     </Box>
   );

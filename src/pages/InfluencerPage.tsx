@@ -34,7 +34,9 @@ const InfluencerPage: React.FC = () => {
       } catch (error) {
         console.error('스레드 데이터 가져오기 오류:', error);
         if (axios.isAxiosError(error)) {
-          setError(`데이터를 불러오는 중 오류가 발생했습니다. 자세한 내용: ${error.message}`);
+          setError(error.message === 'Email rate limit exceeded' 
+            ? '회원가입 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' 
+            : error.message);
           if (error.response) {
             console.error('응답 데이터:', error.response.data);
             console.error('응답 상태:', error.response.status);
