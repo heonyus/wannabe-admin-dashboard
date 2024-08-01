@@ -2,7 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Header.css';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  username: string | null;
+}
+
+const Header: React.FC<HeaderProps> = ({ username }) => {
   return (
     <header className="header">
       <div className="logo">
@@ -10,15 +14,18 @@ const Header: React.FC = () => {
       </div>
       <nav>
         <ul>
-          {/* <li><Link to="/">Home</Link></li> */}
-          {/* <li><Link to="/influencers">Influencers</Link></li>
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/influencers">Influencers</Link></li>
           <li><Link to="/analytics">Analytics</Link></li>
-          <li><Link to="/settings">Settings</Link></li> */}
+          <li><Link to="/settings">Settings</Link></li>
         </ul>
       </nav>
       <div className="user-menu">
-        <img src="/avatar.png" alt="User Avatar" className="avatar" />
-        <span>John Doe</span>
+        {username ? (
+          <span>{username}</span>
+        ) : (
+          <span>로그인이 필요합니다</span>
+        )}
       </div>
     </header>
   );
