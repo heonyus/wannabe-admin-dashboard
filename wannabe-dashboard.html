@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threads User Dashboard - ho.en.y</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #F8F9FA;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #007AFF;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .main-content {
+            display: flex;
+            margin-top: 20px;
+        }
+        .timeline {
+            flex: 2;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-height: 800px;
+            overflow-y: auto;
+        }
+        .sidebar {
+            flex: 1;
+            margin-left: 20px;
+        }
+        .widget {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .post {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+        }
+        #wordCloud {
+            width: 100%;
+            height: 300px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f1f1f1;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #636366;
+        }
+        footer strong {
+            font-weight: bold;
+        }
+        .search-bar {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .post a {
+            color: #007AFF;
+            text-decoration: none;
+        }
+        .post a:hover {
+            text-decoration: underline;
+        }
+        #realTimeActivity {
+            background-color: #e6f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Threads User Dashboard - ho.en.y</h1>
+    </header>
+
+    <div class="container">
+        <input type="text" id="searchBar" class="search-bar" placeholder="키워드 검색...">
+        <div id="realTimeActivity">실시간 활동이 여기에 표시됩니다...</div>
+        <div class="main-content">
+            <div class="timeline" id="timeline">
+                <!-- Posts will be dynamically inserted here -->
+            </div>
+            
+            <div class="sidebar">
+                <div class="widget">
+                    <h3>인사이트</h3>
+                    <canvas id="insightChart"></canvas>
+                </div>
+                <div class="widget">
+                    <h3>키워드 클라우드</h3>
+                    <div id="wordCloud"></div>
+                </div>
+                <div class="widget">
+                    <h3>총계</h3>
+                    <div id="totalStats"></div>
+                </div>
+                <div class="widget">
+                    <h3>주요 상호작용</h3>
+                    <div id="topInteractions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 <strong>WANNABE</strong> Inc.</p>
+    </footer>
+
+    <script>
+        const posts = [
+    {
+        "id": "17952676451801887",
+        "text": "아 이제 다른 거 만들러 가야됩니다… https://sparkerhoney-beta.vercel.app/en/home",
+        "timestamp": "2024-07-10T17:46:43+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9QEY6iS8UK",
+        "likes": 60,
+        "replies": 71,
+        "views": 1019
+    },
+    {
+        "id": "18039102850810933",
+        "text": "나 순정만화 주인공이세요?",
+        "timestamp": "2024-07-10T08:33:34+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9PFCjUygW0",
+        "likes": 163,
+        "replies": 125,
+        "views": 1997
+    },
+    {
+        "id": "17968344818753503",
+        "text": "여러분 쓰레드 열심히 하세요. 당신이 쓰레드를 열심히 한다면 쓰레드 오류가 났다는 게시글에 쓰레드 개발자가 와서 직접 버그 해결했다는 답글을 받을 수 있습니다. 그래도쓰레드api만들어주셔서감사합니다챌린지",
+        "timestamp": "2024-07-10T03:12:38+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9OgW8ty4tK",
+        "likes": 46,
+        "replies": 32,
+        "views": 1121
+    },
+    {
+        "id": "17922963839926646",
+        "text": "메타야... 나도 순정이 있다... 니가 이런식으로 내 순정을 짓밟으면 임마!!! 그때는 깡패가 되는거야! 코드를 안짜게 되는 거야 임마!!",
+        "timestamp": "2024-07-09T14:43:58+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9NKrflPpUs",
+        "likes": 54,
+        "replies": 23,
+        "views": 1104
+    },
+    {
+        "id": "18308416090082288",
+        "text": "\"알고리즘\"에 대해서 엄청나게 해박한 지식이 있나보다.\n\n나도 학부시절에 Recommendation System에 대해서 논문세미나랑 관련 연구재단 프로젝트 2개 정도 했었는데, 감도 안잡힐 정도로 복잡한 시스템을 가지고 있다는 것을 알고 있다. 일반적인 E-commerce에서 사용하는 단순 Collaborative Filtering부터 최근 유튜브 알고리즘이나 메타에서 개발하고 있는 GNN 까지 엄청 어려워서 \"아, 이건 내 길이 아니구나\"했었는데 진심으로 개탄스럽다. 현재도 Recommendation System을 연구하는 연구원들과 개발하고 있는 엔지니어들이 그렇게 단순하고 간단하게 \"알고리즘\"을 작성했을까? 나도 전문가가 아니지만 내가 알기로는 인과추론까지 연구해서 유저들의 액션에서 어떤 인과가 있는지 분석하는 것으로 알고 있는데... 참... 할말이 많다...\n\n과연 당신은 직접 \"알고리즘\"을 수식으로 적어서 공부해본 적이 있는가?\n\n제발 알고 얘기했으면 좋겠다 부끄러우니까",
+        "timestamp": "2024-07-09T06:39:04+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9MTMBvPyHr",
+        "likes": 66,
+        "replies": 62,
+        "views": 1450
+    },
+    {
+        "id": "18027741448999241",
+        "text": "인스타나 쓰레드에서 뭔가 이거 버그같다! 하면 핸드폰을 흔들어보세요! 버그리포트를 제출할 수 있게 된답니다! 신기하죠? - 지나가던 개발자가.",
+        "timestamp": "2024-07-09T04:33:06+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9MExaFSK_7",
+        "likes": 75,
+        "replies": 48,
+        "views": 2963
+    },
+    {
+        "id": "18009063353308895",
+        "text": "쓰레드는 나 업무하고 올라니까 오류 수정해서 배포 다시 해 놓아라 진짜 화나게 하지 말고 진짜로. 짜짜루. @threads @zuck Threads API",
+        "timestamp": "2024-07-09T04:18:19+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9MDFIBvdge",
+        "likes": 24,
+        "replies": 15,
+        "views": 456
+    },
+    {
+        "id": "17842674216264579",
+        "text": "No text",
+        "timestamp": "2024-07-09T00:51:53+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9LrdNUy2lk",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18062667988593266",
+        "text": "No text",
+        "timestamp": "2024-07-08T14:23:49+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9KjlEAynVD",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "17882726709081975",
+        "text": "짠!",
+        "timestamp": "2024-07-08T11:40:36+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9KQ4uJSxb2",
+        "likes": 139,
+        "replies": 19,
+        "views": 1596
+    },
+    {
+        "id": "18030729745907385",
+        "text": "난 오늘 국밥이랑 오소리감투랑 떡갈비랑 빨간거 먹을거에요. 다 죽어따!",
+        "timestamp": "2024-07-08T11:32:10+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9KP72QyM8W",
+        "likes": 98,
+        "replies": 30,
+        "views": 1468
+    },
+    {
+        "id": "17978951525584010",
+        "text": "No text",
+        "timestamp": "2024-07-08T10:31:48+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9KJBwfSmsx",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "17953570550803438",
+        "text": "난 사실 강아지랑 대화를 할 수 있는 능력이 있어요. “리나씨, 우리가 이 날씨에 산책을 나오는게 맞나요?” (끄덕)",
+        "timestamp": "2024-07-08T10:17:01+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9KHPq-yHEk",
+        "likes": 857,
+        "replies": 109,
+        "views": 11575
+    },
+    {
+        "id": "18008020073567206",
+        "text": "No text",
+        "timestamp": "2024-07-08T09:04:30+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J_CYWy7FX",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18361736569096088",
+        "text": "No text",
+        "timestamp": "2024-07-08T08:41:54+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J8c4SyHDI",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18111815119384303",
+        "text": "No text",
+        "timestamp": "2024-07-08T08:37:23+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J77wcSKsD",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18029219252129156",
+        "text": "짱구네 가전제품은 다 새거래요~ 왜그럴 !~~~~~! 까~~~~~요?",
+        "timestamp": "2024-07-08T07:58:27+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J3emhvdtH",
+        "likes": 21,
+        "replies": 21,
+        "views": 2449
+    },
+    {
+        "id": "17853453822227450",
+        "text": "여러분 구운 김을 좋아하시나요? 근데! 구우면 안돼요! 왜그럴 까~~~~~~요?",
+        "timestamp": "2024-07-08T07:51:51+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J2uMTPSGg",
+        "likes": 29,
+        "replies": 22,
+        "views": 3819
+    },
+    {
+        "id": "18059817706612894",
+        "text": "No text",
+        "timestamp": "2024-07-08T07:49:09+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J2adFIhS3",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18026933636006291",
+        "text": "햄버거가 우울한데, 참 위로해주기가 어려워요 여러분. 왜 그럴까~~~~~~~요?",
+        "timestamp": "2024-07-08T07:47:02+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J2K_6v7g8",
+        "likes": 20,
+        "replies": 14,
+        "views": 1089
+    },
+    {
+        "id": "18441270412017974",
+        "text": "No text",
+        "timestamp": "2024-07-08T07:44:02+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J10-II6O3",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18035340787863109",
+        "text": "\"체리야 안녕?\" 하면 체리가 뭐라고 말하게~~~요?",
+        "timestamp": "2024-07-08T07:41:07+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J1fobv7DF",
+        "likes": 32,
+        "replies": 41,
+        "views": 5049
+    },
+    {
+        "id": "18273646435238840",
+        "text": "4가 도망가면 뭐게~요?",
+        "timestamp": "2024-07-08T07:37:20+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J1D87PHsb",
+        "likes": 30,
+        "replies": 36,
+        "views": 10105
+    },
+    {
+        "id": "17893855226962822",
+        "text": "아홉마리 강아지가 알을 낳으면?",
+        "timestamp": "2024-07-08T07:35:32+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9J02yuPP_q",
+        "likes": 33,
+        "replies": 30,
+        "views": 8584
+    },
+    {
+        "id": "18063362908588584",
+        "text": "요 아소비 빠따 정",
+        "timestamp": "2024-07-07T14:01:23+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9H8N3YS85y",
+        "likes": 107,
+        "replies": 31,
+        "views": 1681
+    },
+    {
+        "id": "18034448693015896",
+        "text": "노을과 나",
+        "timestamp": "2024-07-07T07:30:47+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9HPet7ycuP",
+        "likes": 248,
+        "replies": 63,
+        "views": 2420
+    },
+    {
+        "id": "18273580498231533",
+        "text": "No text",
+        "timestamp": "2024-07-07T02:45:14+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9Gu1s1SCqH",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18017997887127065",
+        "text": "너네 육회 맛있다 다빈아. @00silvergun , @soonjeongmachokwondabin",
+        "timestamp": "2024-07-06T14:23:26+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9FZ8jMyZ0h",
+        "likes": 69,
+        "replies": 29,
+        "views": 2946
+    },
+    {
+        "id": "18069228622484532",
+        "text": "No text",
+        "timestamp": "2024-07-06T14:01:22+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9FXa8py5bL",
+        "likes": 0,
+        "replies": 0,
+        "views": 0
+    },
+    {
+        "id": "18033679141886770",
+        "text": "너 나 왜 그렇게 봐?",
+        "timestamp": "2024-07-06T11:59:31+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9FJeePSyFg",
+        "likes": 131,
+        "replies": 20,
+        "views": 2823
+    },
+    {
+        "id": "17931070775877277",
+        "text": "참~나 다 홍대 놀러갔네~ 난 코드나 짜야징~ 다 놀아라~ 놀고 안정하게 집이나 가라~ 근데 다음날 저격은 안돼요~ 나한테 호오오오오오온나요~!",
+        "timestamp": "2024-07-05T15:46:05+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9C-nAKSjMa",
+        "likes": 83,
+        "replies": 24,
+        "views": 5193
+    },
+    {
+        "id": "17962072040649094",
+        "text": "서울살이 몇 핸 가요?",
+        "timestamp": "2024-07-05T10:45:59+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9CcOxtyEON",
+        "likes": 417,
+        "replies": 47,
+        "views": 5613
+    },
+    {
+        "id": "17898888177009689",
+        "text": "우아!!! 나는 오른쪽이다!!!!",
+        "timestamp": "2024-07-05T09:48:56+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9CVvKaSgEZ",
+        "likes": 48,
+        "replies": 33,
+        "views": 2699
+    },
+    {
+        "id": "18049267048761424",
+        "text": "코드짜다 정신 놓아버린 나 아카이빙",
+        "timestamp": "2024-07-05T07:58:26+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9CJF11S2cs",
+        "likes": 373,
+        "replies": 53,
+        "views": 15321
+    },
+    {
+        "id": "18016463717176953",
+        "text": "잠만 다들 폼클렌징 다 쓰면 뒤에 짤라서 물로 안채워요???",
+        "timestamp": "2024-07-05T04:11:16+0000",
+        "permalink": "https://www.threads.net/@ho.en.y/post/C9BvE22SZBU",
+        "likes": 104,
+        "replies": 131,
+        "views": 32263
+    }
+]
+
+        function renderPosts(postsToRender) {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            postsToRender.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.innerHTML = `
+                    <p><a href="${post.permalink}" target="_blank">${post.text}</a></p>
+                    <div class="post-stats">
+                        <span>좋아요: ${post.likes}</span>
+                        <span>답글: ${post.replies}</span>
+                        <span>조회수: ${post.views}</span>
+                        <small>${new Date(post.timestamp).toLocaleString()}</small>
+                    </div>
+                `;
+                timeline.appendChild(postElement);
+            });
+        }
+
+        renderPosts(posts);
+
+        // 검색 기능
+        const searchBar = document.getElementById('searchBar');
+        searchBar.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const filteredPosts = posts.filter(post => 
+                post.text.toLowerCase().includes(searchTerm)
+            );
+            renderPosts(filteredPosts);
+        });
+
+        // 인사이트 차트
+        const ctx = document.getElementById('insightChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['좋아요', '답글', '조회수'],
+                datasets: [{
+                    label: '최근 게시글 평균 통계',
+                    data: [
+                        posts.reduce((sum, post) => sum + (post.likes || 0), 0) / posts.length,
+                        posts.reduce((sum, post) => sum + (post.replies || 0), 0) / posts.length,
+                        posts.reduce((sum, post) => sum + (post.views || 0), 0) / posts.length
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 워드 클라우드
+        const words = posts.flatMap(post => 
+            post.text.split(/\s+/).filter(word => word.length > 3)
+        ).reduce((acc, word) => {
+            acc[word] = (acc[word] || 0) + 1;
+            return acc;
+        }, {});
+
+        const wordArray = Object.entries(words)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 50)
+            .map(([text, size]) => ({ text, size: size * 5 }));
+
+        const layout = d3.layout.cloud()
+            .size([300, 300])
+            .words(wordArray)
+            .padding(5)
+            .rotate(() => ~~(Math.random() * 2) * 90)
+            .font("Arial")
+            .fontSize(d => d.size)
+            .on("end", draw);
+
+        layout.start();
+
+        function draw(words) {
+            d3.select("#wordCloud").append("svg")
+                .attr("width", layout.size()[0])
+                .attr("height", layout.size()[1])
+                .append("g")
+                .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                .selectAll("text")
+                .data(words)
+                .enter().append("text")
+                .style("font-size", d => d.size + "px")
+                .style("font-family", "Arial")
+                .style("fill", () => d3.schemeCategory10[~~(Math.random() * 10)])
+                .attr("text-anchor", "middle")
+                .attr("transform", d => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
+                .text(d => d.text);
+        }
+
+        // 총계 표시
+        function updateTotalStats() {
+            const totalLikes = posts.reduce((sum, post) => sum + (post.likes || 0), 0);
+            const totalReplies = posts.reduce((sum, post) => sum + (post.replies || 0), 0);
+            const totalViews = posts.reduce((sum, post) => sum + (post.views || 0), 0);
+            
+            document.getElementById('totalStats').innerHTML = `
+                <p>총 좋아요: ${totalLikes}</p>
+                <p>총 답글: ${totalReplies}</p>
+                <p>총 조회수: ${totalViews}</p>
+            `;
+        }
+
+        updateTotalStats();
+
+        // 실시간 활동 시뮬레이션
+        function simulateRealTimeActivity() {
+            const activities = [
+                "새 게시글을 작성 중입니다.",
+                "다른 사용자의 게시글에 댓글을 달고 있습니다.",
+                "좋아요를 받고 있습니다.",
+                "댓글에 좋아요를 받고 있습니다.",
+                "게시글이 많은 조회수를 기록하고 있습니다."
+            ];
+
+            setInterval(() => {
+                const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+                document.getElementById('realTimeActivity').textContent = `실시간 활동: ${randomActivity}`;
+            }, 5000); // 5초마다 업데이트
+        }
+
+        simulateRealTimeActivity();
+
+        // 주요 상호작용 분석
+        function analyzeTopInteractions() {
+            // 이 부분은 실제 데이터가 필요합니다. 여기서는 예시로 처리합니다.
+            const topInteractions = [
+                { user: "@user1", interactions: 50 },
+                { user: "@user2", interactions: 45 },
+                { user: "@user3", interactions: 40 },
+            ];
+
+            const interactionsHtml = topInteractions.map(interaction => 
+                `<p>${interaction.user}: ${interaction.interactions}회 상호작용</p>`
+            ).join('');
+
+            document.getElementById('topInteractions').innerHTML = interactionsHtml;
+        }
+
+        analyzeTopInteractions();
+
+        // 챗챗 관련 포스팅 필터링
+        function filterChatChatPosts() {
+            const chatChatPosts = posts.filter(post => post.text.toLowerCase().includes('chatchat'));
+            // 여기에 챗챗 관련 포스트를 표시하는 로직을 추가할 수 있습니다.
+            console.log("챗챗 관련 포스트:", chatChatPosts);
+        }
+
+        filterChatChatPosts();
+    </script>
+</body>
+</html>

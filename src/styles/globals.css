@@ -1,0 +1,69 @@
+:root {
+    --background-color: #F8F9FA;
+    --primary-color: #007AFF;
+    --text-color: #333333;
+    --secondary-text-color: #636366;
+  }
+  
+  body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to bottom, var(--background-color), #E8E9EA);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+  }
+  
+  .app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .content {
+    display: flex;
+    flex: 1;
+  }
+  
+  main {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    width: 100%;
+  }
+  
+  .card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: all 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  h1, h2, h3 {
+    color: var(--primary-color);
+  }
+  
+  @media (max-width: 768px) {
+    .content {
+      flex-direction: column;
+    }
+    
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
