@@ -1,14 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import RealTimeActivity from '../components/RealTimeActivity';
-import ActivityGraph from '../components/ActivityGraph';
-import PopularKeywords from '../components/PopularKeywords';
-import ChatChatPosts from '../components/ChatChatPosts';
-import UserInteractions from '../components/UserInteractions';
+import axios from 'axios';
+
+interface Thread {
+  id: string;
+  text: string;
+  timestamp: string;
+  permalink: string;
+  likes: number;
+  replies: number;
+  views: number;
+  media_url?: string;
+  media_type: string;
+}
 
 interface InfluencerData {
   name: string;
-  // 다른 필요한 속성들을 여기에 추가하세요
+  threads: Thread[];
 }
 
 const InfluencerPage: React.FC = () => {
@@ -16,29 +24,55 @@ const InfluencerPage: React.FC = () => {
   const [influencerData, setInfluencerData] = useState<InfluencerData | null>(null);
 
   useEffect(() => {
-    // 여기서 인플루언서 데이터를 가져오는 API 호출을 수행합니다.
-    // 예시:
     const fetchData = async () => {
-      // const data = await fetchInfluencerData(id);
-      // setInfluencerData(data);
-      setInfluencerData({ name: 'Sample Influencer' }); // 임시 데이터
+      try {
+        const response = await axios.get('https://wannabe-backend.vercel.app/api/threads');
+        const threads = response.data;
+        setInfluencerData({
+          name: '샘플 인플루언서',
+          threads: threads
+        });
+      } catch (error) {
+        console.error('인플루언서 데이터 가져오기 오류:', error);
+      }
     };
     fetchData();
   }, [id]);
 
   if (!influencerData) {
-    return <div>Loading...</div>;
+    return <div>로딩 중...</div>;
   }
 
   return (
     <div className="influencer-page">
       <h1>인플루언서 대시보드: {influencerData.name}</h1>
-      <div className="dashboard-grid">
-        <RealTimeActivity influencerId={id || ''} />
-        <ActivityGraph influencerId={id || ''} />
-        <PopularKeywords influencerId={id || ''} />
-        <ChatChatPosts influencerId={id || ''} />
-        <UserInteractions influencerId={id || ''} />
+      <div className="threads-list">
+        <h2>게시물 목록</h2>
+        {influencerData.threads.map((thread) => (
+          <div key={thread.id} className="thread-item">
+            <h3>{thread.text}</h3>
+            <p>게시 시간: {new Date(thread.timestamp).toLocaleString()}</p>
+            {thread.media_url && (
+              <div className="thread-media">
+                {thread.media_type === 'IMAGE' ? (
+                  <img src={thread.media_url} alt="Thread media" />
+                ) : thread.media_type === 'VIDEO' ? (
+                  <video src={thread.media_url} controls />
+                ) : null}
+              </div>
+            )}
+            <p>
+              <a href={thread.permalink} target="_blank" rel="noopener noreferrer">
+                게시물 링크
+              </a>
+            </p>
+            <div className="thread-stats">
+              <span>좋아요: {thread.likes}</span>
+              <span>댓글: {thread.replies}</span>
+              <span>조회수: {thread.views}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
