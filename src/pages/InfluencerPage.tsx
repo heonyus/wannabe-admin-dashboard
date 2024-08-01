@@ -25,8 +25,8 @@ const InfluencerPage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('https://wannabe-backend.vercel.app/api/threads', {
-          timeout: 10000, // 10초 타임아웃 설정
+        const response = await axios.get(`https://wannabe-backend.vercel.app/api/threads?instagram_id=${id}`, {
+          timeout: 10000,
         });
         console.log('API 응답:', response.data);
         setThreads(response.data);

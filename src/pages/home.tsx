@@ -1,27 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, List, ListItem, ListItemText } from '@mui/material';
 import { Link } from 'react-router-dom';
-import RealTimeActivity from '../components/RealTimeActivity';
-import InfluencerRanking from '../components/InfluencerRanking';
-import ActivityGraph from '../components/ActivityGraph';
-import PopularKeywords from '../components/PopularKeywords';
-import ChatChatPosts from '../components/ChatChatPosts';
-import UserInteractions from '../components/UserInteractions';
+import { supabase } from '../config/supabase';
+
+interface Influencer {
+  id: string;
+  instagram_id: string;
+}
 
 const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const influencers = [
-    { id: 'ho.en.y', name: 'ho.en.y' },
-    // 다른 인플루언서들 추가
-  ];
+  const [influencers, setInfluencers] = useState<Influencer[]>([]);
 
-  const filteredInfluencers = influencers.filter(influencer =>
-    influencer.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchInfluencers();
+  }, [searchTerm]);
 
-  const handleInfluencerClick = (influencerId: string) => {
-    const dashboardPath = '/Users/lhe339/Desktop/Wannabe/wannabe-admin-dashboard/wannabe-dashboard.html';
-    window.open(`file://${dashboardPath}`, '_blank');
+  const fetchInfluencers = async () => {
+    let query = supabase
+      .from('users')
+      .select('id, instagram_id')
+      .order('instagram_id', { ascending: true });
+
+    if (searchTerm) {
+      query = query.ilike('instagram_id', `%${searchTerm}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('인플루언서 데이터 가져오기 오류:', error);
+    } else {
+      setInfluencers(data || []);
+    }
   };
 
   return (
@@ -35,25 +46,16 @@ const Home: React.FC = () => {
         style={{ marginBottom: '20px' }}
       />
       <List>
-        {filteredInfluencers.map((influencer) => (
+        {influencers.map((influencer) => (
           <ListItem 
             key={influencer.id} 
             component={Link} 
-            to={`/influencer/${influencer.id}`} 
-            onClick={() => handleInfluencerClick(influencer.id)}
+            to={`/influencer/${influencer.instagram_id}`}
           >
-            <ListItemText primary={influencer.name} />
+            <ListItemText primary={influencer.instagram_id} />
           </ListItem>
         ))}
       </List>
-      <div className="dashboard-grid">
-        <RealTimeActivity />
-        <InfluencerRanking />
-        <ActivityGraph />
-        <PopularKeywords />
-        <ChatChatPosts />
-        <UserInteractions />
-      </div>
     </div>
   );
 };
