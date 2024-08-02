@@ -8,7 +8,6 @@ interface Influencer {
   instagram_id: string;
 }
 
-
 const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
